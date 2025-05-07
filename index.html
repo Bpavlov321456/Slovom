@@ -55,14 +55,14 @@
     
     <div class="converter">
         <label for="amount">Въведете сума:</label>
-        <input type="number" id="amount" min="0" step="0.01" placeholder="Напр. 124.00">
+        <input type="number" id="amount" min="0" step="0.01" placeholder="Напр. 1440.00">
         
         <div class="result" id="result">Очаквайте резултата тук...</div>
         <div class="numeric-format" id="numericFormat"></div>
     </div>
     
     <div class="instructions">
-        <p>Въведете число (напр. 124 или 3.50) и автоматично ще се покаже словом на български.</p>
+        <p>Въведете число (напр. 1440 или 3.50) и автоматично ще се покаже словом на български.</p>
     </div>
 
     <script>
@@ -109,29 +109,22 @@
                     result += thousandsWords + ' хиляди';
                 }
                 
-                // Добавяме "и" ако следват стотици, десетици или единици
-                if (intPart % 1000 > 0) {
-                    result += ' и ';
-                } else {
-                    result += ' ';
-                }
+                // НЕ добавяме "и" след хиляди
+                result += ' ';
                 intPart %= 1000;
             }
             
-            // Обработка на стотици (специална логика за числа под 1000)
+            // Обработка на стотици
             if (intPart >= 100) {
                 const hundred = Math.floor(intPart / 100);
                 result += hundreds[hundred];
                 
-                // За числа под 1000 не слагаме "и" след стотиците, освен ако следват десетици/единици
+                // Добавяме "и" само ако следват десетици/единици (1-19)
                 if (intPart % 100 > 0) {
-                    // Специален случай за числа като 120, 130 и т.н.
-                    if (intPart % 100 >= 10 && intPart % 100 < 20) {
+                    if (intPart % 100 < 20) {
                         result += ' и ';
-                    } else if (intPart % 100 >= 20) {
-                        result += ' ';
                     } else {
-                        result += ' и ';
+                        result += ' ';
                     }
                 } else {
                     result += ' ';
@@ -165,7 +158,7 @@
             } else if (result.includes('две') && !result.includes('двеста')) {
                 result = result.replace('две', 'два') + ' лева';
             } else if (result.trim() !== '') {
-                result += ' лева';
+                result += 'лева';
             } else {
                 result += 'лева';
             }
@@ -182,8 +175,7 @@
             
             // Оптимизация на интервалите
             result = result.replace(/\s+/g, ' ').trim();
-            result = result.replace(/ и и /g, ' и '); // Поправка за двойни "и"
-            result = result.replace(/лева и/, 'лева и'); // Поправка за интервали
+            result = result.replace(/ и и /g, ' и ');
             
             return {
                 words: result,
