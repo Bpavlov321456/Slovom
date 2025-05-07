@@ -3,26 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Число в думи - Български</title>
+    <title>Инструменти - Числа в думи и PDF конвертор</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/dist/cropper.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/dist/cropper.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
         }
         h1 {
-            color: #0066cc;
+            color: #2c3e50;
             text-align: center;
+            margin-bottom: 30px;
         }
-        .converter {
-            background-color: white;
+        .tool-container {
+            background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
         }
-        input {
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: #f1f1f1;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Стилове за конвертора на числа */
+        #number-converter input {
             width: 100%;
             padding: 10px;
             font-size: 18px;
@@ -38,34 +68,142 @@
             font-size: 18px;
             line-height: 1.6;
         }
-        .instructions {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #666;
-        }
         .numeric-format {
             font-weight: bold;
             color: #d9534f;
             margin-top: 10px;
         }
+        .btn-pdf {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .btn-pdf:hover {
+            background-color: #c0392b;
+        }
+        
+        /* Стилове за PDF конвертора */
+        .upload-area {
+            border: 2px dashed #3498db;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            background-color: #f0f7fd;
+        }
+        #image-container {
+            margin: 20px auto;
+            max-width: 100%;
+        }
+        #image-preview {
+            max-width: 100%;
+            max-height: 60vh;
+            display: block;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-download {
+            background-color: #27ae60;
+        }
+        .btn-download:hover {
+            background-color: #219653;
+        }
+        .hidden {
+            display: none;
+        }
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .quality-control {
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
-    <h1>Преобразуване на число в думи</h1>
+    <h1>Инструменти - Числа в думи и PDF конвертор</h1>
     
-    <div class="converter">
+    <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="number-converter">Числа в думи</button>
+        <button class="tab-btn" data-tab="pdf-converter">Изображение към PDF</button>
+    </div>
+    
+    <!-- Конвертор на числа в думи -->
+    <div id="number-converter" class="tool-container tab-content active">
+        <h2>Преобразуване на число в думи</h2>
         <label for="amount">Въведете сума:</label>
         <input type="number" id="amount" min="0" step="0.01" placeholder="Напр. 1440.00">
         
         <div class="result" id="result">Очаквайте резултата тук...</div>
         <div class="numeric-format" id="numericFormat"></div>
+        
+        <button class="btn-pdf" id="save-number-pdf">Запази като PDF</button>
     </div>
     
-    <div class="instructions">
-        <p>Въведете число (напр. 1440 или 3.50) и автоматично ще се покаже словом на български.</p>
+    <!-- Конвертор изображение към PDF -->
+    <div id="pdf-converter" class="tool-container tab-content">
+        <h2>Конвертор изображение към PDF</h2>
+        <p style="text-align: center;">Качете снимка, изрежете я и запазете като PDF</p>
+        
+        <div class="upload-area" id="upload-area">
+            <input type="file" id="image-upload" accept="image/*" class="hidden">
+            <p>Кликнете за да изберете снимка или я провлачете тук</p>
+            <button class="btn">Избери снимка</button>
+        </div>
+        
+        <div id="image-container" class="hidden">
+            <img id="image-preview">
+        </div>
+        
+        <div id="controls" class="controls hidden">
+            <div class="quality-control">
+                <label for="quality">Качество на PDF:</label>
+                <input type="range" id="quality" min="0.5" max="1" step="0.1" value="0.9">
+                <span id="quality-value">90%</span>
+            </div>
+            <button class="btn" id="confirm-btn">Потвърди изрязване</button>
+            <button class="btn btn-download" id="download-btn">Запази като PDF</button>
+        </div>
     </div>
 
     <script>
+        // Tab функционалност
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Конвертор на числа в думи
         function numberToWordsBG(num) {
             const units = ['', 'едно', 'две', 'три', 'четири', 'пет', 'шест', 'седем', 'осем', 'девет'];
             const teens = ['десет', 'единадесет', 'дванадесет', 'тринадесет', 'четиринадесет', 
@@ -160,7 +298,7 @@
             } else if (result.trim() !== '') {
                 result += 'лева';
             } else {
-                result += 'лева';
+                result += 'леva';
             }
             
             // Добавяне на стотинки
@@ -198,6 +336,157 @@
             const conversion = numberToWordsBG(value);
             resultDiv.textContent = conversion.words.charAt(0).toUpperCase() + conversion.words.slice(1);
             numericFormatDiv.textContent = conversion.numeric;
+        });
+        
+        // Запазване на числото като PDF
+        document.getElementById('save-number-pdf').addEventListener('click', function() {
+            const { jsPDF } = window.jspdf;
+            const value = amountInput.value;
+            
+            if (!value) {
+                alert("Моля, въведете число първо!");
+                return;
+            }
+            
+            const conversion = numberToWordsBG(value);
+            const doc = new jsPDF();
+            
+            // Заглавие
+            doc.setFontSize(20);
+            doc.text('Преобразуване на число в думи', 105, 20, { align: 'center' });
+            
+            // Входни данни
+            doc.setFontSize(14);
+            doc.text(`Входна стойност: ${conversion.numeric}`, 20, 40);
+            
+            // Резултат
+            doc.setFontSize(16);
+            const splitText = doc.splitTextToSize(conversion.words, 170);
+            doc.text(splitText, 20, 60);
+            
+            // Дата
+            doc.setFontSize(10);
+            const now = new Date();
+            doc.text(`Генерирано на: ${now.toLocaleDateString('bg-BG')}`, 20, 280);
+            
+            doc.save(`число-в-думи-${value.replace('.', '-')}.pdf`);
+        });
+        
+        // PDF конвертор за изображения
+        const { jsPDF } = window.jspdf;
+        let cropper;
+        let croppedImageBlob = null;
+        
+        document.getElementById('quality').addEventListener('input', function() {
+            document.getElementById('quality-value').textContent = 
+                Math.round(this.value * 100) + '%';
+        });
+
+        document.getElementById('upload-area').addEventListener('click', function() {
+            document.getElementById('image-upload').click();
+        });
+
+        document.getElementById('image-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.match('image.*')) {
+                loadImage(file);
+            }
+        });
+
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgElement = document.getElementById('image-preview');
+                imgElement.src = e.target.result;
+                
+                document.getElementById('image-container').classList.remove('hidden');
+                document.getElementById('controls').classList.remove('hidden');
+                
+                initCropper(imgElement);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function initCropper(imageElement) {
+            if (cropper) {
+                cropper.destroy();
+            }
+            
+            cropper = new Cropper(imageElement, {
+                aspectRatio: NaN,
+                viewMode: 1,
+                autoCropArea: 0.8,
+                responsive: true,
+                movable: true,
+                rotatable: true,
+                zoomable: true,
+                ready() {
+                    this.crop();
+                }
+            });
+        }
+
+        document.getElementById('confirm-btn').addEventListener('click', function() {
+            if (!cropper) return;
+            
+            const canvas = cropper.getCroppedCanvas({
+                minWidth: 1024,
+                minHeight: 768,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            
+            canvas.toBlob(function(blob) {
+                croppedImageBlob = blob;
+                alert("Изрязването е потвърдено! Сега можете да генерирате PDF.");
+            }, 'image/jpeg', document.getElementById('quality').value);
+        });
+
+        document.getElementById('download-btn').addEventListener('click', function() {
+            if (!croppedImageBlob) {
+                alert("Моля, първо изрежете и потвърдете изображението!");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const pdf = new jsPDF({
+                        orientation: img.width > img.height ? 'landscape' : 'portrait',
+                        unit: 'px',
+                        format: [img.width, img.height]
+                    });
+                    
+                    pdf.addImage(e.target.result, 'JPEG', 0, 0, img.width, img.height);
+                    pdf.save('изображение.pdf');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(croppedImageBlob);
+        });
+
+        // Drag and drop
+        const uploadArea = document.getElementById('upload-area');
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#f0f7fd';
+        });
+        
+        uploadArea.addEventListener('dragleave', function() {
+            this.style.backgroundColor = '';
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '';
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.match('image.*')) {
+                loadImage(file);
+            }
         });
     </script>
 </body>
