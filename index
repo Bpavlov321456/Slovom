@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Число в думи - Български</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #0066cc;
+            text-align: center;
+        }
+        .converter {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #0066cc;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        .instructions {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+        .numeric-format {
+            font-weight: bold;
+            color: #d9534f;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Преобразуване на число в думи</h1>
+    
+    <div class="converter">
+        <label for="amount">Въведете сума:</label>
+        <input type="number" id="amount" min="0" step="0.01" placeholder="Напр. 340.00">
+        
+        <div class="result" id="result">Очаквайте резултата тук...</div>
+        <div class="numeric-format" id="numericFormat"></div>
+    </div>
+    
+    <div class="instructions">
+        <p>Въведете число (напр. 340 или 3.50) и автоматично ще се покаже словом на български.</p>
+    </div>
+
+    <script>
+        function numberToWordsBG(num) {
+            const units = ['', 'едно', 'две', 'три', 'четири', 'пет', 'шест', 'седем', 'осем', 'девет'];
+            const teens = ['десет', 'единадесет', 'дванадесет', 'тринадесет', 'четиринадесет', 
+                          'петнадесет', 'шестнадесет', 'седемнадесет', 'осемнадесет', 'деветнадесет'];
+            const tens = ['', '', 'двадесет', 'тридесет', 'четиридесет', 'петдесет', 
+                          'шестдесет', 'седемдесет', 'осемдесет', 'деветдесет'];
+            const hundreds = ['', 'сто', 'двеста', 'триста', 'четиристотин', 'петстотин', 
+                              'шестстотин', 'седемстотин', 'осемстотин', 'деветстотин'];
+            
+            let result = '';
+            num = parseFloat(num);
+            
+            if (isNaN(num)) return {words: 'Моля, въведете валидно число', numeric: ''};
+            if (num === 0) return {words: 'нула лева и нула стотинки', numeric: '0.00 лв.'};
+            
+            // Цяла част
+            let intPart = Math.floor(num);
+            let decimalPart = Math.round((num - intPart) * 100);
+            
+            // Форматиране на числовия изход
+            const numericFormat = num.toFixed(2) + ' лв.';
+            
+            if (intPart >= 1000000) {
+                return {words: 'Числото е твърде голямо', numeric: numericFormat};
+            }
+            
+            // Обработка на стотици хиляди
+            if (intPart >= 100000) {
+                const hundredThousands = Math.floor(intPart / 100000);
+                result += hundreds[hundredThousands] + ' ';
+                intPart %= 100000;
+            }
+            
+            // Обработка на хиляди
+            if (intPart >= 1000) {
+                const thousands = Math.floor(intPart / 1000);
+                if (thousands === 1) {
+                    result += 'хиляда';
+                } else {
+                    const thousandsWords = numberToWordsBG(thousands).words.replace('нула', '').replace(/лева.*/, '').trim();
+                    result += thousandsWords + ' хиляди';
+                }
+                
+                // Добавяме "и" ако следват стотици, десетици или единици
+                if (intPart % 1000 > 0) {
+                    result += ' и ';
+                } else {
+                    result += ' ';
+                }
+                intPart %= 1000;
+            }
+            
+            // Обработка на стотици
+            if (intPart >= 100) {
+                const hundred = Math.floor(intPart / 100);
+                result += hundreds[hundred];
+                
+                // Добавяме "и" ако следват десетици или единици
+                if (intPart % 100 > 0) {
+                    result += ' и ';
+                } else {
+                    result += ' ';
+                }
+                intPart %= 100;
+            }
+            
+            // Обработка на десетици и единици
+            if (intPart >= 20) {
+                const ten = Math.floor(intPart / 10);
+                result += tens[ten];
+                
+                // Добавяме "и" за единици
+                if (intPart % 10 > 0) {
+                    result += ' и ';
+                }
+                intPart %= 10;
+            } else if (intPart >= 10) {
+                result += teens[intPart - 10] + ' ';
+                intPart = 0;
+            }
+            
+            // Обработка на единици
+            if (intPart > 0) {
+                result += units[intPart] + ' ';
+            }
+            
+            // Добавяне на "лева" с интервал
+            if (result.includes('едно') && !result.includes('хиляда')) {
+                result = result.replace('едно', 'един') + ' лев';
+            } else if (result.includes('две') && !result.includes('двеста')) {
+                result = result.replace('две', 'два') + ' лева';
+            } else if (result.trim() !== '') {
+                result += ' лева';
+            } else {
+                result += 'лева';
+            }
+            
+            // Добавяне на стотинки
+            result += ' и ';
+            if (decimalPart === 0) {
+                result += '00 стотинки';
+            } else if (decimalPart < 10) {
+                result += '0' + decimalPart + ' стотинки';
+            } else {
+                result += decimalPart + ' стотинки';
+            }
+            
+            // Оптимизация на интервалите
+            result = result.replace(/\s+/g, ' ').trim();
+            result = result.replace(/ и и /g, ' и '); // Поправка за двойни "и"
+            result = result.replace(/лева и/, 'лева и'); // Поправка за интервали
+            
+            return {
+                words: result,
+                numeric: numericFormat
+            };
+        }
+        
+        const amountInput = document.getElementById('amount');
+        const resultDiv = document.getElementById('result');
+        const numericFormatDiv = document.getElementById('numericFormat');
+        
+        amountInput.addEventListener('input', function() {
+            const value = this.value;
+            if (value === '') {
+                resultDiv.textContent = 'Очаквайте резултата тук...';
+                numericFormatDiv.textContent = '';
+                return;
+            }
+            
+            const conversion = numberToWordsBG(value);
+            resultDiv.textContent = conversion.words.charAt(0).toUpperCase() + conversion.words.slice(1);
+            numericFormatDiv.textContent = conversion.numeric;
+        });
+    </script>
+</body>
+</html>
